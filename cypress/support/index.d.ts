@@ -22,6 +22,6 @@ declare namespace Cypress {
       rowNumber: number,
       amount: number,
       transactionType: 'Debit' | 'Credit',
-    )
+    ): Chainable<void>
   }
 }
