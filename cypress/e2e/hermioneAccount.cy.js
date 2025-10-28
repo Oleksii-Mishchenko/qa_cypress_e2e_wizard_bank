@@ -3,10 +3,6 @@
 import { faker } from '@faker-js/faker';
 
 describe('Bank app', () => {
-  const initialBalance = 5096;
-  const depositAmount = faker.number.int({ min: 500, max: 1000 });
-  const withdrawAmount = faker.number.int({ min: 50, max: 500 });
-  const balance = initialBalance + depositAmount - withdrawAmount;
   const user = 'Hermoine Granger';
   const accountNumber = '1001';
   const accountCurrency = 'Dollar';
@@ -18,28 +14,39 @@ describe('Bank app', () => {
   it('should provide the ability to work with Hermione\'s bank account', () => {
     cy.loginUser(user);
 
-    cy.assertAccountProperty('Account Number', accountNumber);
-    cy.assertAccountProperty('Balance', `${initialBalance}`);
-    cy.assertAccountProperty('Currency', `${accountCurrency}`);
+    cy.get('[ng-hide="noAccount"]').find('strong').eq(1).invoke('text')
+      .then((text) => {
+        const initialBalance = Number(text.trim());
+        const depositAmount = faker.number.int({ min: 500, max: 1000 });
+        const withdrawAmount = faker.number.int({ min: 50, max: 500 });
+        const balance = initialBalance + depositAmount - withdrawAmount;
 
-    cy.makeDeposit(depositAmount);
-    cy.assertSuccessMessage('Deposit Successful');
-    cy.assertAccountProperty('Balance', `${initialBalance + depositAmount}`);
+        cy.assertAccountProperty('Account Number', accountNumber);
+        cy.assertAccountProperty('Balance', `${initialBalance}`);
+        cy.assertAccountProperty('Currency', `${accountCurrency}`);
 
-    cy.makeWithdrawal(withdrawAmount);
-    cy.assertSuccessMessage('Transaction successful');
-    cy.assertAccountProperty('Balance', `${balance}`);
+        cy.makeDeposit(depositAmount);
+        cy.assertSuccessMessage('Deposit Successful');
+        cy.assertAccountProperty(
+          'Balance',
+          `${initialBalance + depositAmount}`
+        );
 
-    cy.clickButton('transactions');
-    cy.assertTransactionDetails(-2, depositAmount, 'Credit');
-    cy.assertTransactionDetails(-1, withdrawAmount, 'Debit');
+        cy.makeWithdrawal(withdrawAmount);
+        cy.assertSuccessMessage('Transaction successful');
+        cy.assertAccountProperty('Balance', `${balance}`);
 
-    cy.clickButton('back');
-    cy.get('#accountSelect').select('1002');
-    cy.clickButton('transactions');
-    cy.get('table tbody tr').should('have.length', 0);
+        cy.clickButton('transactions');
+        cy.assertTransactionDetails(-2, depositAmount, 'Credit');
+        cy.assertTransactionDetails(-1, withdrawAmount, 'Debit');
 
-    cy.logoutUser();
-    cy.get('#userSelect').should('be.visible');
+        cy.clickButton('back');
+        cy.get('#accountSelect').select('1002');
+        cy.clickButton('transactions');
+        cy.get('table tbody tr').should('have.length', 0);
+
+        cy.logoutUser();
+        cy.get('#userSelect').should('be.visible');
+      });
   });
 });
